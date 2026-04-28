@@ -3,8 +3,8 @@ from app.content.competitive import (
     run,
     DIFFERENTIATION_FALLBACKS,
     WEAKNESSES_FALLBACKS,
-    GENERIC_DIFF_FALLBACK,
-    GENERIC_WEAK_FALLBACK,
+    GENERIC_DIFFERENTIATION_FALLBACK,
+    GENERIC_WEAKNESSES_FALLBACK,
 )
 from app.llm.base import LLMError
 from app.schemas import (
@@ -74,6 +74,7 @@ async def test_retry_then_success(sample_input):
     out, source = await run(client, sample_input, max_retries=1)
     assert source == "llm"
     assert client.calls == 2
+    assert out == intel
 
 
 async def test_retry_exhausted_returns_kitchen_fallback(sample_input):
@@ -92,8 +93,8 @@ async def test_unknown_category_returns_generic_fallback(sample_input):
     client = _FakeClient([LLMError("x"), LLMError("y")])
     out, source = await run(client, unknown, max_retries=1)
     assert source == "fallback"
-    assert out.differentiation_suggestions == GENERIC_DIFF_FALLBACK
-    assert out.common_weaknesses == GENERIC_WEAK_FALLBACK
+    assert out.differentiation_suggestions == GENERIC_DIFFERENTIATION_FALLBACK
+    assert out.common_weaknesses == GENERIC_WEAKNESSES_FALLBACK
 
 
 async def test_empty_competitors_still_classified_as_llm(sample_input):
@@ -112,11 +113,11 @@ async def test_empty_competitors_still_classified_as_llm(sample_input):
     assert out == intel
 
 
-async def test_llm_error_both_attempts_returns_fallback(sample_input):
-    client = _FakeClient([LLMError("a"), LLMError("b")])
-    out, source = await run(client, sample_input, max_retries=1)
+async def test_max_retries_zero_falls_back_immediately(sample_input):
+    client = _FakeClient([LLMError("a")])
+    out, source = await run(client, sample_input, max_retries=0)
     assert source == "fallback"
-    assert client.calls == 2
+    assert client.calls == 1
 
 
 async def test_fallback_dispatches_by_category_case_insensitive(sample_input):

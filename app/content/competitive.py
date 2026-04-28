@@ -55,13 +55,13 @@ WEAKNESSES_FALLBACKS: dict[str, list[str]] = {
 }
 
 
-GENERIC_DIFF_FALLBACK: list[str] = [
+GENERIC_DIFFERENTIATION_FALLBACK: list[str] = [
     "Better value at a similar price point",
     "Designed for everyday practicality",
     "Easier to use right out of the box",
 ]
 
-GENERIC_WEAK_FALLBACK: list[str] = [
+GENERIC_WEAKNESSES_FALLBACK: list[str] = [
     "Quality inconsistent across batches",
     "Setup or unboxing more confusing than expected",
     "Hidden costs after purchase (shipping, accessories)",
@@ -74,9 +74,9 @@ def _fallback(product: ProductInput) -> CompetitiveIntel:
         price_benchmarks=None,
         competitors=[],
         differentiation_suggestions=DIFFERENTIATION_FALLBACKS.get(
-            cat, GENERIC_DIFF_FALLBACK
+            cat, GENERIC_DIFFERENTIATION_FALLBACK
         ),
-        common_weaknesses=WEAKNESSES_FALLBACKS.get(cat, GENERIC_WEAK_FALLBACK),
+        common_weaknesses=WEAKNESSES_FALLBACKS.get(cat, GENERIC_WEAKNESSES_FALLBACK),
     )
 
 
