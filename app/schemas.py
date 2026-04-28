@@ -1,5 +1,5 @@
 from typing import Literal
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 AdAxis = Literal["urgency", "aspirational", "social_proof", "problem_solution", "humor"]
 SectionSource = Literal["llm", "fallback", "skipped"]
@@ -55,6 +55,12 @@ class PriceBenchmarks(BaseModel):
     median: float = Field(ge=0)
     high: float = Field(ge=0)
     sample_size: int = Field(ge=1)
+
+    @model_validator(mode="after")
+    def _check_ordering(self):
+        if not (self.low <= self.median <= self.high):
+            raise ValueError("price_benchmarks must satisfy low <= median <= high")
+        return self
 
 
 class CompetitiveIntel(BaseModel):
