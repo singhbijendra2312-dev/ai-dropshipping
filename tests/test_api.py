@@ -2,6 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.api.deps import get_llm_client
+from app.config import Settings, get_settings
 from app.llm.base import LLMError
 from app.main import app
 
@@ -19,6 +20,10 @@ class _FakeClient:
 @pytest.fixture
 def client_factory():
     def _make(payload):
+        fake_settings = Settings(  # type: ignore[call-arg]
+            anthropic_api_key="test-key-not-real",
+        )
+        app.dependency_overrides[get_settings] = lambda: fake_settings
         app.dependency_overrides[get_llm_client] = lambda: _FakeClient(payload)
         return TestClient(app)
     yield _make
