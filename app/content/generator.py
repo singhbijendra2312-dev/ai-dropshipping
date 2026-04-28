@@ -1,3 +1,4 @@
+import sys
 from typing import Literal
 
 from app.llm.base import LLMClient, LLMError
@@ -21,14 +22,17 @@ def _fallback_content(product: ProductInput) -> ContentBlock:
         ]
         bullets = base[:3]
 
+    title = f"{name} — Built for {audience}"
+    description = (
+        f"Discover the {name}, made with {audience} in mind. "
+        "Practical, dependable, and ready when you are."
+    )
+    ad_copy = f"Meet the {name}. Simple. Useful. Yours today."
     return ContentBlock(
-        product_title=f"{name} — Built for {audience}",
-        description=(
-            f"Discover the {name}, made with {audience} in mind. "
-            "Practical, dependable, and ready when you are."
-        ),
+        product_title=title[:200],
+        description=description[:2000],
         bullets=bullets,
-        ad_copy=f"Meet the {name}. Simple. Useful. Yours today.",
+        ad_copy=ad_copy[:500],
         marketing_angle="Practical value for everyday life",
     )
 
@@ -47,5 +51,9 @@ def generate_with_fallback(
             last_error = exc
             continue
     # Exhausted retries — return deterministic fallback.
-    _ = last_error  # available for logging if added later
+    print(
+        f"[WARN] LLM failed after {attempts} attempt(s), using fallback. "
+        f"Last error: {last_error}",
+        file=sys.stderr,
+    )
     return _fallback_content(product), "fallback"

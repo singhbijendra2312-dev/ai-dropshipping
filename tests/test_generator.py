@@ -47,3 +47,15 @@ def test_fallback_when_features_empty(sample_input):
     block, source = generate_with_fallback(client, no_features, max_retries=1)
     assert source == "fallback"
     assert len(block.bullets) >= 3
+
+
+def test_fallback_truncates_long_product_name(sample_input):
+    long_input = sample_input.model_copy(
+        update={"product_name": "A" * 200, "target_audience": "B" * 200}
+    )
+    client = _FakeClient([LLMError("x"), LLMError("y")])
+    block, source = generate_with_fallback(client, long_input, max_retries=1)
+    assert source == "fallback"
+    assert len(block.product_title) <= 200
+    assert len(block.description) <= 2000
+    assert len(block.ad_copy) <= 500
