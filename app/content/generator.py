@@ -37,7 +37,7 @@ def _fallback_content(product: ProductInput) -> ContentBlock:
     )
 
 
-def generate_with_fallback(
+async def generate_with_fallback(
     client: LLMClient,
     product: ProductInput,
     max_retries: int = 1,
@@ -46,11 +46,10 @@ def generate_with_fallback(
     last_error: Exception | None = None
     for _ in range(attempts):
         try:
-            return client.generate_content(product), "llm"
+            return await client.generate_content(product), "llm"
         except LLMError as exc:
             last_error = exc
             continue
-    # Exhausted retries — return deterministic fallback.
     print(
         f"[WARN] LLM failed after {attempts} attempt(s), using fallback. "
         f"Last error: {last_error}",

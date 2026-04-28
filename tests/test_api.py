@@ -11,7 +11,7 @@ class _FakeClient:
     def __init__(self, content_or_error):
         self._payload = content_or_error
 
-    def generate_content(self, product):
+    async def generate_content(self, product):
         if isinstance(self._payload, Exception):
             raise self._payload
         return self._payload

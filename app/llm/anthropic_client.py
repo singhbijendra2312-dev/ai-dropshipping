@@ -1,4 +1,4 @@
-from anthropic import Anthropic, APIError
+from anthropic import AsyncAnthropic, APIError
 from pydantic import ValidationError
 
 from app.content.prompts import CONTENT_TOOL, SYSTEM_PROMPT, build_user_message
@@ -13,12 +13,12 @@ class AnthropicLLMClient:
         model: str = "claude-haiku-4-5",
         timeout_seconds: float = 20.0,
     ) -> None:
-        self._client = Anthropic(api_key=api_key, timeout=timeout_seconds)
+        self._client = AsyncAnthropic(api_key=api_key, timeout=timeout_seconds)
         self._model = model
 
-    def generate_content(self, product: ProductInput) -> ContentBlock:
+    async def generate_content(self, product: ProductInput) -> ContentBlock:
         try:
-            response = self._client.messages.create(
+            response = await self._client.messages.create(
                 model=self._model,
                 max_tokens=1024,
                 system=[

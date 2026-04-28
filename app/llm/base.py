@@ -1,5 +1,5 @@
 from typing import Protocol
-from app.schemas import ProductInput, ContentBlock
+from app.schemas import ContentBlock, ProductInput
 
 
 class LLMError(Exception):
@@ -7,6 +7,6 @@ class LLMError(Exception):
 
 
 class LLMClient(Protocol):
-    def generate_content(self, product: ProductInput) -> ContentBlock:
+    async def generate_content(self, product: ProductInput) -> ContentBlock:
         """Generate structured product content. Raises LLMError on failure."""
         ...

@@ -16,13 +16,13 @@ def health() -> dict[str, str]:
 
 
 @router.post("/generate-product", response_model=ProductResponse)
-def generate_product(
+async def generate_product(
     product: ProductInput,
     llm: LLMClient = Depends(get_llm_client),
     settings: Settings = Depends(get_settings),
 ) -> ProductResponse:
     price = suggest_price(product.cost_price, product.category)
-    content, source = generate_with_fallback(
+    content, source = await generate_with_fallback(
         llm, product, max_retries=settings.llm_max_retries
     )
     return ProductResponse(
