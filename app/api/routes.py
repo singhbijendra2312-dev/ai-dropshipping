@@ -1,5 +1,5 @@
 import asyncio
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
@@ -63,7 +63,7 @@ async def generate_product(
     base_task = generate_with_fallback(
         llm, product, max_retries=settings.llm_max_retries
     )
-    coros: dict[str, "asyncio.Future"] = {"base": base_task}
+    coros: dict[str, Any] = {"base": base_task}
     if axes:
         coros["variations"] = variations_mod.run(
             llm, product, axes, max_retries=settings.llm_max_retries
