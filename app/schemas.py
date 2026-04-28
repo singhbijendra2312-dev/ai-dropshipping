@@ -1,5 +1,5 @@
 from typing import Literal
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class ProductInput(BaseModel):
@@ -8,6 +8,13 @@ class ProductInput(BaseModel):
     category: str = Field(min_length=1, max_length=50)
     features: list[str] = Field(default_factory=list, max_length=20)
     target_audience: str = Field(default="", max_length=200)
+
+    @field_validator("product_name", "category", mode="before")
+    @classmethod
+    def _require_non_blank(cls, v: str) -> str:
+        if not isinstance(v, str) or not v.strip():
+            raise ValueError("must not be blank")
+        return v.strip()
 
 
 class ContentBlock(BaseModel):
