@@ -43,6 +43,27 @@ class AudienceSegment(BaseModel):
     recommended_channel: RecommendedChannel
 
 
+class Competitor(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    price: float = Field(ge=0)
+    source_url: str = Field(min_length=1, max_length=2000)
+    key_feature: str = Field(min_length=1, max_length=300)
+
+
+class PriceBenchmarks(BaseModel):
+    low: float = Field(ge=0)
+    median: float = Field(ge=0)
+    high: float = Field(ge=0)
+    sample_size: int = Field(ge=1)
+
+
+class CompetitiveIntel(BaseModel):
+    price_benchmarks: PriceBenchmarks | None = None
+    competitors: list[Competitor] = Field(default_factory=list, max_length=5)
+    differentiation_suggestions: list[str] = Field(min_length=1, max_length=5)
+    common_weaknesses: list[str] = Field(min_length=1, max_length=5)
+
+
 class ProductResponse(BaseModel):
     selling_price: float
     product_score: int = Field(ge=0, le=100)
@@ -56,3 +77,5 @@ class ProductResponse(BaseModel):
     variations_source: SectionSource = "skipped"
     audience_segments: list[AudienceSegment] | None = None
     segments_source: SectionSource = "skipped"
+    competitive_intel: CompetitiveIntel | None = None
+    compete_source: SectionSource = "skipped"
