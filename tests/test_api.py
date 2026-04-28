@@ -15,10 +15,12 @@ class _FakeClient:
         content=None,
         variations=None,
         segments=None,
+        competitive=None,
     ):
         self._content = content
         self._variations = variations
         self._segments = segments
+        self._competitive = competitive
 
     async def generate_content(self, product):
         if isinstance(self._content, Exception):
@@ -36,6 +38,11 @@ class _FakeClient:
         if isinstance(self._segments, Exception):
             raise self._segments
         return self._segments or []
+
+    async def generate_competitive_intel(self, product):
+        if isinstance(self._competitive, Exception):
+            raise self._competitive
+        return self._competitive
 
 
 @pytest.fixture
@@ -76,11 +83,12 @@ def test_generate_product_includes_score(make_client, sample_content):
     assert isinstance(body["product_score"], int)
     assert 0 <= body["product_score"] <= 100
     assert body["source"] == "llm"
-    # No variations/segments requested
     assert body["ad_variations"] is None
     assert body["variations_source"] == "skipped"
     assert body["audience_segments"] is None
     assert body["segments_source"] == "skipped"
+    assert body["competitive_intel"] is None
+    assert body["compete_source"] == "skipped"
 
 
 def test_generate_product_fallback_path(make_client):
@@ -246,3 +254,116 @@ def test_all_three_fail_returns_200_with_all_fallback(make_client):
     assert body["source"] == "fallback"
     assert body["variations_source"] == "fallback"
     assert body["segments_source"] == "fallback"
+
+
+def test_compete_returned_when_requested(
+    make_client, sample_content, sample_competitive_intel
+):
+    client = make_client(
+        content=sample_content,
+        competitive=sample_competitive_intel,
+    )
+    payload = {
+        "product_name": "Portable Blender",
+        "cost_price": 15,
+        "category": "Kitchen",
+        "features": ["a", "b", "c"],
+        "target_audience": "Health-conscious",
+    }
+    r = client.post("/generate-product?compete=true", json=payload)
+    assert r.status_code == 200
+    body = r.json()
+    assert body["compete_source"] == "llm"
+    assert body["competitive_intel"] is not None
+    assert len(body["competitive_intel"]["competitors"]) == 2
+    assert body["competitive_intel"]["price_benchmarks"]["median"] == 22.5
+    assert len(body["competitive_intel"]["differentiation_suggestions"]) == 3
+    assert len(body["competitive_intel"]["common_weaknesses"]) == 3
+
+
+def test_compete_default_skipped(make_client, sample_content):
+    client = make_client(content=sample_content)
+    payload = {
+        "product_name": "X",
+        "cost_price": 15,
+        "category": "Kitchen",
+        "features": [],
+        "target_audience": "",
+    }
+    r = client.post("/generate-product", json=payload)
+    assert r.status_code == 200
+    body = r.json()
+    assert body["compete_source"] == "skipped"
+    assert body["competitive_intel"] is None
+
+
+def test_compete_failure_partial_response(
+    make_client, sample_content, sample_variations, sample_segments
+):
+    client = make_client(
+        content=sample_content,
+        variations=sample_variations,
+        segments=sample_segments,
+        competitive=LLMError("search broke"),
+    )
+    payload = {
+        "product_name": "Portable Blender",
+        "cost_price": 15,
+        "category": "Kitchen",
+        "features": ["a", "b"],
+        "target_audience": "",
+    }
+    r = client.post(
+        "/generate-product?variations=urgency,humor&segments=true&compete=true",
+        json=payload,
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["source"] == "llm"
+    assert body["variations_source"] == "llm"
+    assert body["segments_source"] == "llm"
+    assert body["compete_source"] == "fallback"
+    intel = body["competitive_intel"]
+    assert intel["competitors"] == []
+    assert intel["price_benchmarks"] is None
+    # Kitchen category fallback
+    assert intel["differentiation_suggestions"] == [
+        "Faster setup than competitors",
+        "Easier to clean",
+        "More compact storage",
+    ]
+
+
+def test_all_four_sections_in_parallel(
+    make_client,
+    sample_content,
+    sample_variations,
+    sample_segments,
+    sample_competitive_intel,
+):
+    client = make_client(
+        content=sample_content,
+        variations=sample_variations,
+        segments=sample_segments,
+        competitive=sample_competitive_intel,
+    )
+    payload = {
+        "product_name": "Portable Blender",
+        "cost_price": 15,
+        "category": "Kitchen",
+        "features": ["a", "b", "c"],
+        "target_audience": "Health-conscious",
+    }
+    r = client.post(
+        "/generate-product?variations=urgency,humor&segments=true&compete=true",
+        json=payload,
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["source"] == "llm"
+    assert body["variations_source"] == "llm"
+    assert body["segments_source"] == "llm"
+    assert body["compete_source"] == "llm"
+    assert len(body["ad_variations"]) == 2
+    assert len(body["audience_segments"]) == 3
+    assert len(body["competitive_intel"]["competitors"]) == 2

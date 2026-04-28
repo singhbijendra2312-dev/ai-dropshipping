@@ -60,3 +60,37 @@ def sample_segments():
             recommended_channel="facebook",
         ),
     ]
+
+
+@pytest.fixture
+def sample_competitive_intel():
+    from app.schemas import Competitor, CompetitiveIntel, PriceBenchmarks
+    return CompetitiveIntel(
+        price_benchmarks=PriceBenchmarks(
+            low=15.0, median=22.5, high=30.0, sample_size=4
+        ),
+        competitors=[
+            Competitor(
+                name="Acme Blender",
+                price=19.99,
+                source_url="https://example.com/acme",
+                key_feature="USB-C charging",
+            ),
+            Competitor(
+                name="Zip Mini Blender",
+                price=24.99,
+                source_url="https://example.com/zip",
+                key_feature="650 ml capacity",
+            ),
+        ],
+        differentiation_suggestions=[
+            "Faster blending cycle",
+            "Quieter operation",
+            "Larger battery",
+        ],
+        common_weaknesses=[
+            "Leaks at the lid",
+            "Loud motor",
+            "Short battery life",
+        ],
+    )
