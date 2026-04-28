@@ -126,3 +126,52 @@ class AnthropicLLMClient:
                     raise LLMError(f"Segments output failed schema: {exc}") from exc
 
         raise LLMError("LLM did not invoke the submit_audience_segments tool")
+
+    async def generate_competitive_intel(self, product):
+        from app.content.prompts import (
+            COMPETITIVE_SYSTEM_PROMPT,
+            COMPETITIVE_TOOL,
+            build_competitive_user_message,
+        )
+        from app.schemas import CompetitiveIntel
+
+        try:
+            response = await self._client.messages.create(
+                model=self._model,
+                max_tokens=4096,
+                system=[
+                    {
+                        "type": "text",
+                        "text": COMPETITIVE_SYSTEM_PROMPT,
+                        "cache_control": {"type": "ephemeral"},
+                    }
+                ],
+                tools=[
+                    {
+                        "type": "web_search_20250305",
+                        "name": "web_search",
+                        "max_uses": 5,
+                    },
+                    COMPETITIVE_TOOL,
+                ],
+                tool_choice={"type": "auto"},
+                messages=[
+                    {
+                        "role": "user",
+                        "content": build_competitive_user_message(product),
+                    }
+                ],
+            )
+        except APIError as exc:
+            raise LLMError(f"Anthropic API error: {exc}") from exc
+
+        for block in response.content:
+            if block.type == "tool_use" and block.name == "submit_competitive_intel":
+                try:
+                    return CompetitiveIntel.model_validate(block.input)
+                except ValidationError as exc:
+                    raise LLMError(
+                        f"Competitive intel output failed schema: {exc}"
+                    ) from exc
+
+        raise LLMError("LLM did not invoke the submit_competitive_intel tool")

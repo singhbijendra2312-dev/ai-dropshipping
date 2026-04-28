@@ -1,5 +1,12 @@
 from typing import Protocol
-from app.schemas import AdAxis, AdVariation, AudienceSegment, ContentBlock, ProductInput
+from app.schemas import (
+    AdAxis,
+    AdVariation,
+    AudienceSegment,
+    CompetitiveIntel,
+    ContentBlock,
+    ProductInput,
+)
 
 
 class LLMError(Exception):
@@ -21,4 +28,11 @@ class LLMClient(Protocol):
         self, product: ProductInput
     ) -> list[AudienceSegment]:
         """Generate exactly 3 audience segments. Raises LLMError on failure."""
+        ...
+
+    async def generate_competitive_intel(
+        self, product: ProductInput
+    ) -> CompetitiveIntel:
+        """Generate competitive intelligence using web search.
+        Raises LLMError on failure."""
         ...
