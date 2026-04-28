@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.api.deps import get_llm_client
 from app.config import Settings, get_settings
+from app.content import competitive as competitive_mod
 from app.content import segments as segments_mod
 from app.content import variations as variations_mod
 from app.content.generator import generate_with_fallback
@@ -51,6 +52,7 @@ async def generate_product(
     product: ProductInput,
     variations: Annotated[str | None, Query()] = None,
     segments: Annotated[bool, Query()] = False,
+    compete: Annotated[bool, Query()] = False,
     llm: LLMClient = Depends(get_llm_client),
     settings: Settings = Depends(get_settings),
 ) -> ProductResponse:
@@ -70,6 +72,10 @@ async def generate_product(
         coros["segments"] = segments_mod.run(
             llm, product, max_retries=settings.llm_max_retries
         )
+    if compete:
+        coros["compete"] = competitive_mod.run(
+            llm, product, max_retries=settings.llm_max_retries
+        )
 
     keys = list(coros.keys())
     results = await asyncio.gather(*coros.values())
@@ -84,6 +90,10 @@ async def generate_product(
     seg_source: SectionSource = "skipped"
     if "segments" in out:
         seg_list, seg_source = out["segments"]
+    comp_intel = None
+    comp_source: SectionSource = "skipped"
+    if "compete" in out:
+        comp_intel, comp_source = out["compete"]
 
     return ProductResponse(
         selling_price=price,
@@ -98,4 +108,6 @@ async def generate_product(
         variations_source=var_source,
         audience_segments=seg_list,
         segments_source=seg_source,
+        competitive_intel=comp_intel,
+        compete_source=comp_source,
     )
