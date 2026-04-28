@@ -4,6 +4,5 @@ __pycache__/
 .env
 .pytest_cache/
 .uv/
-uv.lock
 *.egg-info/
 .DS_Store
