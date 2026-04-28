@@ -1,5 +1,5 @@
 from typing import Protocol
-from app.schemas import AdAxis, AdVariation, ContentBlock, ProductInput
+from app.schemas import AdAxis, AdVariation, AudienceSegment, ContentBlock, ProductInput
 
 
 class LLMError(Exception):
@@ -15,4 +15,10 @@ class LLMClient(Protocol):
         self, product: ProductInput, axes: list[AdAxis]
     ) -> list[AdVariation]:
         """Generate ad variations for the given axes. Raises LLMError on failure."""
+        ...
+
+    async def generate_segments(
+        self, product: ProductInput
+    ) -> list[AudienceSegment]:
+        """Generate exactly 3 audience segments. Raises LLMError on failure."""
         ...

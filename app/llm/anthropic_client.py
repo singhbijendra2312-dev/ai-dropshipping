@@ -88,3 +88,41 @@ class AnthropicLLMClient:
                     raise LLMError(f"Variations output failed schema: {exc}") from exc
 
         raise LLMError("LLM did not invoke the submit_ad_variations tool")
+
+    async def generate_segments(self, product):
+        from app.content.prompts import (
+            SEGMENTS_SYSTEM_PROMPT,
+            SEGMENTS_TOOL,
+            build_segments_user_message,
+        )
+        from app.schemas import AudienceSegment
+
+        try:
+            response = await self._client.messages.create(
+                model=self._model,
+                max_tokens=1024,
+                system=[
+                    {
+                        "type": "text",
+                        "text": SEGMENTS_SYSTEM_PROMPT,
+                        "cache_control": {"type": "ephemeral"},
+                    }
+                ],
+                tools=[SEGMENTS_TOOL],
+                tool_choice={"type": "tool", "name": "submit_audience_segments"},
+                messages=[
+                    {"role": "user", "content": build_segments_user_message(product)}
+                ],
+            )
+        except APIError as exc:
+            raise LLMError(f"Anthropic API error: {exc}") from exc
+
+        for block in response.content:
+            if block.type == "tool_use" and block.name == "submit_audience_segments":
+                try:
+                    raw_list = block.input.get("segments", [])
+                    return [AudienceSegment.model_validate(s) for s in raw_list]
+                except ValidationError as exc:
+                    raise LLMError(f"Segments output failed schema: {exc}") from exc
+
+        raise LLMError("LLM did not invoke the submit_audience_segments tool")
