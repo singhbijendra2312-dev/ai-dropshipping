@@ -237,14 +237,19 @@ COMPETITIVE_TOOL = {
         "type": "object",
         "properties": {
             "price_benchmarks": {
-                "type": ["object", "null"],
-                "properties": {
-                    "low": {"type": "number", "minimum": 0},
-                    "median": {"type": "number", "minimum": 0},
-                    "high": {"type": "number", "minimum": 0},
-                    "sample_size": {"type": "integer", "minimum": 1},
-                },
-                "required": ["low", "median", "high", "sample_size"],
+                "anyOf": [
+                    {"type": "null"},
+                    {
+                        "type": "object",
+                        "properties": {
+                            "low": {"type": "number", "minimum": 0},
+                            "median": {"type": "number", "minimum": 0},
+                            "high": {"type": "number", "minimum": 0},
+                            "sample_size": {"type": "integer", "minimum": 1},
+                        },
+                        "required": ["low", "median", "high", "sample_size"],
+                    },
+                ],
             },
             "competitors": {
                 "type": "array",
@@ -262,14 +267,14 @@ COMPETITIVE_TOOL = {
             },
             "differentiation_suggestions": {
                 "type": "array",
-                "minItems": 1,
-                "maxItems": 5,
+                "minItems": 3,
+                "maxItems": 3,
                 "items": {"type": "string"},
             },
             "common_weaknesses": {
                 "type": "array",
-                "minItems": 1,
-                "maxItems": 5,
+                "minItems": 3,
+                "maxItems": 3,
                 "items": {"type": "string"},
             },
         },

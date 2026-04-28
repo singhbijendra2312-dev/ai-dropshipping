@@ -3,7 +3,7 @@ from pydantic import ValidationError
 
 from app.content.prompts import CONTENT_TOOL, SYSTEM_PROMPT, build_user_message
 from app.llm.base import LLMError
-from app.schemas import ContentBlock, ProductInput
+from app.schemas import CompetitiveIntel, ContentBlock, ProductInput
 
 
 class AnthropicLLMClient:
@@ -127,13 +127,12 @@ class AnthropicLLMClient:
 
         raise LLMError("LLM did not invoke the submit_audience_segments tool")
 
-    async def generate_competitive_intel(self, product):
+    async def generate_competitive_intel(self, product: ProductInput) -> CompetitiveIntel:
         from app.content.prompts import (
             COMPETITIVE_SYSTEM_PROMPT,
             COMPETITIVE_TOOL,
             build_competitive_user_message,
         )
-        from app.schemas import CompetitiveIntel
 
         try:
             response = await self._client.messages.create(

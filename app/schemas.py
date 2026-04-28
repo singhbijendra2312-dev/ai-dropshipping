@@ -66,8 +66,8 @@ class PriceBenchmarks(BaseModel):
 class CompetitiveIntel(BaseModel):
     price_benchmarks: PriceBenchmarks | None = None
     competitors: list[Competitor] = Field(default_factory=list, max_length=5)
-    differentiation_suggestions: list[str] = Field(min_length=1, max_length=5)
-    common_weaknesses: list[str] = Field(min_length=1, max_length=5)
+    differentiation_suggestions: list[str] = Field(min_length=3, max_length=3)
+    common_weaknesses: list[str] = Field(min_length=3, max_length=3)
 
 
 class ProductResponse(BaseModel):
