@@ -45,3 +45,46 @@ class AnthropicLLMClient:
                     raise LLMError(f"LLM output failed schema: {exc}") from exc
 
         raise LLMError("LLM did not invoke the submit_product_content tool")
+
+    async def generate_variations(
+        self, product, axes
+    ):
+        from app.content.prompts import (
+            VARIATIONS_SYSTEM_PROMPT,
+            VARIATIONS_TOOL,
+            build_variations_user_message,
+        )
+        from app.schemas import AdVariation
+
+        try:
+            response = await self._client.messages.create(
+                model=self._model,
+                max_tokens=1024,
+                system=[
+                    {
+                        "type": "text",
+                        "text": VARIATIONS_SYSTEM_PROMPT,
+                        "cache_control": {"type": "ephemeral"},
+                    }
+                ],
+                tools=[VARIATIONS_TOOL],
+                tool_choice={"type": "tool", "name": "submit_ad_variations"},
+                messages=[
+                    {
+                        "role": "user",
+                        "content": build_variations_user_message(product, list(axes)),
+                    }
+                ],
+            )
+        except APIError as exc:
+            raise LLMError(f"Anthropic API error: {exc}") from exc
+
+        for block in response.content:
+            if block.type == "tool_use" and block.name == "submit_ad_variations":
+                try:
+                    raw_list = block.input.get("variations", [])
+                    return [AdVariation.model_validate(v) for v in raw_list]
+                except ValidationError as exc:
+                    raise LLMError(f"Variations output failed schema: {exc}") from exc
+
+        raise LLMError("LLM did not invoke the submit_ad_variations tool")
