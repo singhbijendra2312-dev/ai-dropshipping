@@ -1,0 +1,11 @@
+{
+  "product_name": "Portable Blender",
+  "cost_price": 15,
+  "category": "Kitchen",
+  "features": [
+    "USB rechargeable",
+    "Compact design",
+    "Easy to clean"
+  ],
+  "target_audience": "Health-conscious users"
+}
